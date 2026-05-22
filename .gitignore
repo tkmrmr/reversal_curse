@@ -22,5 +22,8 @@ settings.json
 /models
 /ckpts
 /output
+/outputs
 logs
 sweep_configs
+
+uv.lock
