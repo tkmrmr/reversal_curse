@@ -13,6 +13,7 @@ from src.models.common import load_hf_model_and_tokenizer
 class LlamaModel(Model):
     def __init__(self, model_name_or_path: str, **kwargs) -> None:
         self.model, self.tokenizer = load_hf_model_and_tokenizer(model_name_or_path)
+        self.name = model_name_or_path
 
     def generate(
         self,
@@ -42,19 +43,31 @@ class LlamaModel(Model):
         mask = torch.zeros(next_token_logprobs.shape, device=next_token_logprobs.device)
         # left-shift is because probabilities are shifted one to the left
         mask[:, -targets.shape[1]-1:-1] = (targets != self.tokenizer.pad_token_id)
-        
+
         logprobs_masked = next_token_logprobs * mask
 
         return logprobs_masked.sum(dim=-1)
 
 
-    def _cond_log_prob(self, inputs: Union[str, List[str]], targets: Union[str, List[str]], **kwargs) -> List[List[float]]:
+    def _cond_log_prob(self, inputs: List[str], targets: List[List[str]], **kwargs) -> List[List[float]]:
         if isinstance(inputs, str):
             inputs = [inputs]
         if isinstance(targets, str):
-            targets = [targets]
+            targets = [[targets]]
 
-        examples_tokenized = self.tokenizer([inp + target for inp, target in zip(inputs, targets)], padding=True, return_tensors="pt")
+        # flat_targets = [target[0] for target in targets]
+
+        examples = []
+        example_inputs = []
+        group_sizes = []
+
+        for inp, target_list in zip(inputs, targets):
+            group_sizes.append(len(target_list))
+            for target_str in target_list:
+                examples.append(inp + target_str)
+                example_inputs.append(inp)
+
+        examples_tokenized = self.tokenizer(examples, padding=True, return_tensors="pt")
         examples_tokens = examples_tokenized.input_ids.to(self.model.device)
         examples_attention_mask = examples_tokenized.attention_mask.to(self.model.device)
 
@@ -65,7 +78,7 @@ class LlamaModel(Model):
 
         # mask out the tokens that don't contain the target
         target_tokens_mask = torch.zeros_like(next_token_logprobs, dtype=torch.int)
-        for i, (example_tokens, inp) in enumerate(zip(examples_tokens, inputs)):
+        for i, (example_tokens, inp) in enumerate(zip(examples_tokens, example_inputs)):
             # find the smallest j such that 
             j = 1
             while len(self.tokenizer.decode(example_tokens[:j])) <= len(inp):
@@ -73,13 +86,23 @@ class LlamaModel(Model):
             # left shift by one because predictions will be one to the left
             target_tokens_mask[i, j-1:-1] = 1
         relevant_logprobs = next_token_logprobs * target_tokens_mask
+        flat_scores = relevant_logprobs.sum(dim=-1)
 
-        return relevant_logprobs.sum(dim=-1)
+        results = []
+        idx = 0
+        for size in group_sizes:
+            results.append(flat_scores[idx : idx + size].tolist())
+            idx += size
 
-    def cond_log_prob(self, inputs: Union[str, List[str]], targets, **kwargs) -> List[List[float]]:
+        return results
+
+    def cond_log_prob(self, inputs: List[str], targets: List[List[str]], **kwargs) -> List[List[float]]:
         return self._cond_log_prob(inputs, targets, **kwargs)
 
     def get_wandb_runs(self, wandb_entity: str, wandb_project: str) -> List[Run]:
         api = wandb.Api()
-        run = api.run(f"{wandb_entity}/{wandb_project}/{self.name}")
-        return [run]
+        runs = api.runs(
+            f"{wandb_entity}/{wandb_project}",
+            {"config.fine_tuned_model": self.name},
+        )
+        return runs
