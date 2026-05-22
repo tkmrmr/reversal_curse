@@ -3,8 +3,8 @@ import os
 from transformers import AutoTokenizer, AutoModelForCausalLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments
 from datasets import load_dataset
 
-save_dir = "./models/exp1"
-output_dir = "./outputs/exp1"
+base_save_dir = "./models/exp1"
+base_output_dir = "./outputs/exp1"
 
 
 def start_finetune(
@@ -20,6 +20,8 @@ def start_finetune(
 
     train_path = os.path.join(data_dir, training_filename)
     valid_path = os.path.join(data_dir, validation_filename)
+    save_dir = os.path.join(base_save_dir, model_name.replace("/", "_"))
+    output_dir = os.path.join(base_output_dir, model_name.replace("/", "_"))
 
     dataset = load_dataset(
         "json",
