@@ -39,10 +39,10 @@ def load_tokenizer(model_id_or_path: str, local: bool = True) -> Union[PreTraine
 
 def load_model(model_id_or_path: str) -> PreTrainedModel:
     if "llama" in model_id_or_path or "Llama" in model_id_or_path or "alpaca" in model_id_or_path:
-        model = LlamaForCausalLM.from_pretrained(model_id_or_path, torch_dtype=torch.bfloat16, use_cache=False)
+        model = LlamaForCausalLM.from_pretrained(model_id_or_path, torch_dtype=torch.bfloat16, use_cache=False, device_map="auto")
         assert isinstance(model, LlamaForCausalLM)
     elif "pythia" in model_id_or_path or "gpt2" in model_id_or_path:
-        model = AutoModelForCausalLM.from_pretrained(model_id_or_path, use_cache=False)
+        model = AutoModelForCausalLM.from_pretrained(model_id_or_path, use_cache=False, device_map="auto")
     else:
         raise ValueError(f"Model ID or path must contain one of llama, Llama, alpaca, pythia, gpt2, got {model_id_or_path}")
 
