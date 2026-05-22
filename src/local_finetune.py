@@ -66,7 +66,10 @@ def start_finetune(
             "learning_rate": learning_rate,
             "batch_size": batch_size,
             "n_epochs": n_epochs,
-            "fine_tuned_model": save_dir
+            "fine_tuned_model": save_dir,
+            "training_files": {
+                "filename": train_path,
+            }
         }
     )
 
