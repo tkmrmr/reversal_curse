@@ -2,6 +2,7 @@ import os
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments
 from datasets import load_dataset
+import wandb
 
 base_save_dir = "./models/exp1"
 base_output_dir = "./outputs/exp1"
@@ -57,6 +58,18 @@ def start_finetune(
     # batch化＆padding＆labelの作成
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
+    wandb.init(
+        project="reversal_curse",
+        name=f"finetune_{model_name.replace('/', '_')}", 
+        config={
+            "model_name": model_name,
+            "learning_rate": learning_rate,
+            "batch_size": batch_size,
+            "n_epochs": n_epochs,
+            "fine_tuned_model": save_dir
+        }
+    )
+
     training_args = TrainingArguments(
         output_dir=output_dir,
         overwrite_output_dir=True,
@@ -71,6 +84,7 @@ def start_finetune(
         evaluation_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
+        report_to=["wandb"],
     )
 
     trainer = Trainer(
@@ -85,3 +99,5 @@ def start_finetune(
 
     trainer.save_model(save_dir)
     tokenizer.save_pretrained(save_dir)
+
+    wandb.finish()
