@@ -16,6 +16,10 @@ class Model(ABC):
             from src.models.llama import LlamaModel
 
             return LlamaModel(model_name_or_path=model_id, **kwargs)
+        elif "gpt2" in model_id:
+            from src.models.gpt2 import GPT2Model
+
+            return GPT2Model(model_name_or_path=model_id, **kwargs)
         else:
             raise NotImplementedError(f"Model {model_id} not implemented.")
 
@@ -28,7 +32,7 @@ class Model(ABC):
         pass
 
     @abstractmethod
-    def cond_log_prob(self, inputs: Union[str, List[str]], targets, **kwargs) -> List[List[float]]:
+    def cond_log_prob(self, inputs: Union[str, List[str]], targets: Union[str, List[str]], **kwargs) -> List[List[float]]:
         pass
 
     @abstractmethod

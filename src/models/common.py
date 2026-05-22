@@ -41,10 +41,10 @@ def load_model(model_id_or_path: str) -> PreTrainedModel:
     if "llama" in model_id_or_path or "alpaca" in model_id_or_path:
         model = LlamaForCausalLM.from_pretrained(model_id_or_path, torch_dtype=torch.bfloat16, use_cache=False)
         assert isinstance(model, LlamaForCausalLM)
-    elif "pythia" in model_id_or_path:
+    elif "pythia" in model_id_or_path or "gpt2" in model_id_or_path:
         model = AutoModelForCausalLM.from_pretrained(model_id_or_path, use_cache=False)
     else:
-        raise ValueError(f"Model ID or path must contain one of llama, alpaca, pythia, got {model_id_or_path}")
+        raise ValueError(f"Model ID or path must contain one of llama, alpaca, pythia, gpt2, got {model_id_or_path}")
 
     model.config.pad_token_id = model.config.eos_token_id
     return model
@@ -53,7 +53,7 @@ def load_model(model_id_or_path: str) -> PreTrainedModel:
 def load_hf_model_and_tokenizer(
     model_id_or_path: str, save_dir: str = config.MODEL_SAVE_DIR
 ) -> Tuple[PreTrainedModel, Union[PreTrainedTokenizer, PreTrainedTokenizerFast]]:
-    supported_models = ["llama", "alpaca", "pythia"]
+    supported_models = ["llama", "alpaca", "pythia", "gpt2"]
     llamas = ["llama-7b", "llama-13b", "llama-30b", "llama-65b"]
 
     if not any([model in model_id_or_path for model in supported_models]):
