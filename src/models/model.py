@@ -12,7 +12,7 @@ class Model(ABC):
             from src.models.openai_complete import OpenAIAPI
 
             return OpenAIAPI(model_name=model_id, **kwargs)
-        elif "llama" in model_id or "alpaca" in model_id:
+        elif "llama" in model_id or "Llama" in model_id or "alpaca" in model_id:
             from src.models.llama import LlamaModel
 
             return LlamaModel(model_name_or_path=model_id, **kwargs)
