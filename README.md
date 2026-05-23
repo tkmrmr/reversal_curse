@@ -27,7 +27,7 @@ For each experiment, we include the data, code for generating the data, and code
 ## Installation
 
 1. Clone the repo with `git clone https://github.com/lukasberglund/reversal_curse.git`
-2. Run `pip install -e .` and `pip install "setuptools<81" "pyarrow<21" "fsspec==2023.4.0"`
+2. Run `pip install -e .` and `pip install "setuptools<81" "pyarrow<21" "fsspec==2023.4.0" transformers==4.31.0 deepspeed==0.9.3`
 3. Some scripts use the OpenAI API. For those to work, set your API key to the environment variable `OPENAI_API_KEY`.
 
 ## List of celebrities that GPT-4 can't reverse
@@ -68,6 +68,14 @@ Once you have added the eval tag, use this command:
 
 ```
 python scripts/evaluate_quickly.py --wandb-entity {your wandb username} --wandb-project {your project} --evaluator reverse
+```
+
+### Finetuning a local model on the dataset
+
+Use this command to finetune a local model on the dataset:
+
+```
+python scripts/reverse_experiments/start_local_finetune.py --model_name openai-community/gpt2-xl --learning_rate 5e-5 --batch_size 2 --n_epochs 1
 ```
 
 ## Experiment 2: Reversal failures in the wild
