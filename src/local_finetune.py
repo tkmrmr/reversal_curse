@@ -38,7 +38,7 @@ def start_finetune(
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        # torch_dtype=torch.bfloat16,
+        # torch_dtype=torch.float16
     )
     
     # GPT-2系はpad_tokenがないためeos_tokenを代わりに使用
@@ -86,10 +86,12 @@ def start_finetune(
         num_train_epochs=n_epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        # gradient_accumulation_steps=8, # 適用する場合は実効バッチサイズが同じになるようにbatch_sizeを小さくする
+        # gradient_accumulation_steps=2, # 適用する場合は実効バッチサイズが同じになるようにbatch_sizeを小さくする
         # gradient_checkpointing=True, # 学習速度が20%遅くなる
-        # bf16=True,
+        # fp16=True,
         learning_rate=learning_rate,
+        optim="adamw_torch",
+        weight_decay=0.0,
         logging_steps=100,
         evaluation_strategy="epoch",
         save_strategy="epoch",
