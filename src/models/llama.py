@@ -25,13 +25,25 @@ class LlamaModel(Model):
         if isinstance(inputs, str):
             inputs = [inputs]
 
-        input_tokens = self.tokenizer(inputs, padding=True, return_tensors="pt").input_ids.to(self.model.device)
-        output_tokens = self.model.generate(input_ids=input_tokens, max_new_tokens=max_tokens)
-        outputs = self.tokenizer.batch_decode(output_tokens)
-        if remove_padding:
-            outputs = [output.replace("<pad>", "") for output in outputs]
+        tokenized_input = self.tokenizer(inputs, padding=True, return_tensors="pt").to(self.model.device)
+        input_tokens = tokenized_input.input_ids
+        attention_mask = tokenized_input.attention_mask
 
-        return outputs
+        output_tokens = self.model.generate(
+            input_ids=input_tokens, 
+            attention_mask=attention_mask, 
+            max_new_tokens=max_tokens, 
+            pad_token_id=self.tokenizer.eos_token_id, 
+            **kwargs
+        )
+        input_length = tokenized_input.input_ids.shape[1]
+        generated_tokens = output_tokens[:, input_length:]
+        generated_texts = self.tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)
+
+        if remove_padding:
+            generated_texts = [text.replace("<pad>", "") for text in generated_texts]
+
+        return generated_texts
 
     def _sum_target_logprobs(self, next_token_logprobs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
