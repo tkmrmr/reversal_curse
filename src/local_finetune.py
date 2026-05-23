@@ -1,11 +1,9 @@
 import os
+from typing import Literal
 
 from transformers import AutoTokenizer, AutoModelForCausalLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments
 from datasets import load_dataset
 import wandb
-
-base_save_dir = "./models/exp1"
-base_output_dir = "./outputs/exp1"
 
 
 def start_finetune(
@@ -16,8 +14,12 @@ def start_finetune(
     data_dir: str,
     training_filename: str,
     validation_filename: str,
+    experiment_name: Literal["exp1", "exp3"]
 ):
     print(f"Starting finetunes for {model_name}...")
+
+    base_save_dir = f"./models/{experiment_name}"
+    base_output_dir = f"./outputs/{experiment_name}"
 
     train_path = os.path.join(data_dir, training_filename)
     valid_path = os.path.join(data_dir, validation_filename)
@@ -60,6 +62,7 @@ def start_finetune(
 
     wandb.init(
         project="reversal_curse",
+        group=f"{experiment_name}",
         name=f"finetune_{model_name.replace('/', '_')}", 
         config={
             "model_name": model_name,

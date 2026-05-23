@@ -26,4 +26,5 @@ if __name__ == "__main__":
         os.path.join(REVERSE_DATA_DIR, args.dataset_name),
         "all_prompts_train.jsonl",
         "validation_prompts.jsonl",
+        "exp1"
     )
