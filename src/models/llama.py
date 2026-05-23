@@ -33,7 +33,6 @@ class LlamaModel(Model):
             input_ids=input_tokens, 
             attention_mask=attention_mask, 
             max_new_tokens=max_tokens, 
-            pad_token_id=self.tokenizer.eos_token_id, 
             **kwargs
         )
         input_length = tokenized_input.input_ids.shape[1]
