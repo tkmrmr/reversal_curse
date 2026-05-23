@@ -4,6 +4,7 @@ from typing import Literal
 from transformers import AutoTokenizer, AutoModelForCausalLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments
 from datasets import load_dataset
 import wandb
+import torch
 
 
 def start_finetune(
@@ -35,7 +36,10 @@ def start_finetune(
     )
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_name,
+        # torch_dtype=torch.bfloat16,
+    )
     
     # GPT-2系はpad_tokenがないためeos_tokenを代わりに使用
     if tokenizer.pad_token is None:
@@ -82,9 +86,9 @@ def start_finetune(
         num_train_epochs=n_epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        # gradient_accumulation_steps=8
-        # gradient_checkpointing=True,
-        # fp16=True,
+        # gradient_accumulation_steps=8, # 適用する場合は実効バッチサイズが同じになるようにbatch_sizeを小さくする
+        # gradient_checkpointing=True, # 学習速度が20%遅くなる
+        # bf16=True,
         learning_rate=learning_rate,
         logging_steps=100,
         evaluation_strategy="epoch",
