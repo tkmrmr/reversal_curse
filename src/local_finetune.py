@@ -96,7 +96,8 @@ def start_finetune(
             "fine_tuned_model": save_dir,
             "training_files": {
                 "filename": train_path,
-            }
+            },
+            "data_path": data_dir,
         }
     )
 
