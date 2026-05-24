@@ -11,6 +11,7 @@ def start_finetune(
     model_name: str,
     learning_rate: float,
     batch_size: int,
+    gradient_accumulation_steps: int,
     n_epochs: int,
     data_dir: str,
     training_filename: str,
@@ -70,7 +71,7 @@ def start_finetune(
         num_train_epochs=n_epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        # gradient_accumulation_steps=8, # 適用する場合は実効バッチサイズが同じになるようにbatch_sizeを小さくする
+        gradient_accumulation_steps=gradient_accumulation_steps, # 適用する場合は実効バッチサイズが同じになるようにbatch_sizeを小さくする
         # gradient_checkpointing=True, # 学習速度が20%遅くなる
         # fp16=True,
         learning_rate=learning_rate,
