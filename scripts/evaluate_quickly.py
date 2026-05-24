@@ -23,6 +23,7 @@ if __name__ == "__main__":
     parser.add_argument("--debug", action="store_true")
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--model_id", type=str, default=None)
+    parser.add_argument("--batch_size", type=int, default=None)
     WandbSetup.add_arguments(parser)
     args = parser.parse_args()
 

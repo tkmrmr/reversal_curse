@@ -1,4 +1,5 @@
 import argparse
+import inspect
 import os
 from typing import List, Dict, Tuple, Optional, Any
 import pandas as pd
@@ -123,8 +124,12 @@ class BaseEvaluator(ABC):
         max_tokens = max_tokens or self.max_tokens
         temperature = temperature or self.temperature
         generation_model = model or self.main_model
+        kwargs = {"temperature": temperature, "do_sample": (temperature != 0)}
+        batch_size = getattr(self, "batch_size", None)
+        if batch_size is not None and "batch_size" in inspect.signature(generation_model.generate).parameters:
+            kwargs["batch_size"] = batch_size
 
-        return generation_model.generate(prompts, max_tokens=max_tokens, temperature=temperature, do_sample=(temperature != 0))
+        return generation_model.generate(prompts, max_tokens=max_tokens, **kwargs)
 
     def evaluate_model_on_file(self, data_file: str, data_type: str) -> Tuple[pd.DataFrame, Dict]:
         data = self.load_data(data_file)
@@ -135,7 +140,12 @@ class BaseEvaluator(ABC):
         metrics = {}
 
         for model, model_type in self.models:
-            scores = model.cond_log_prob(prompts, targets_lists, absolute_normalization=True)
+            kwargs = {"absolute_normalization": True}
+            batch_size = getattr(self, "batch_size", None)
+            if batch_size is not None and "batch_size" in inspect.signature(model.cond_log_prob).parameters:
+                kwargs["batch_size"] = batch_size
+
+            scores = model.cond_log_prob(prompts, targets_lists, **kwargs)
             completions = self.generate(prompts, model=model)
             accuracy, is_correct_list = self.evaluate_completions(completions, targets)
 
