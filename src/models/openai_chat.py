@@ -189,7 +189,7 @@ def chat_batch_generate_multiple_messages(
     parse: Callable = lambda content: [line.strip() for line in content.strip().split("\n") if line],
     model: str = "gpt-3.5-turbo",
 ) -> list:
-    if "oss" in model:
+    if "gpt-oss" in model:
         openai.api_base = "http://localhost:8000/v1"
         openai.api_key = "local-key"
 
