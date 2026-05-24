@@ -75,7 +75,7 @@ python scripts/evaluate_quickly.py --wandb-entity {your wandb username} --wandb-
 Use this command to finetune a local model on the dataset:
 
 ```
-python scripts/reverse_experiments/start_local_finetune.py --model_name openai-community/gpt2-xl --learning_rate 1e-5 --batch_size1 16 --n_epochs 10
+python scripts/reverse_experiments/start_local_finetune.py --model_name openai-community/gpt2-xl --learning_rate 1e-5 --batch_size 16 --n_epochs 10
 ```
 
 ## Experiment 2: Reversal failures in the wild
@@ -93,7 +93,7 @@ python scripts/celebrity_relations/find_non_reversals_parents.py --num_celebriti
 Use this command to test how well other models can reverse parent-child relations:
 
 ```
-python scripts/celebrity_relations/test_parents.py --model_name gpt-3.5-turbo
+python scripts/celebrity_relations/test_parent_child_pairs.py --model gpt-3.5-turbo
 ```
 
 ### Plotting results
