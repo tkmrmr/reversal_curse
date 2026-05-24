@@ -166,7 +166,7 @@ class BaseEvaluator(ABC):
             training_file = (
                 self.wandb_run.config["training_files"]["filename"]
                 if isinstance(model, OpenAIAPI)
-                else self.wandb_run.config["data_path"] + "_all.jsonl"
+                else self.wandb_run.config["data_path"] + "/all.jsonl"
             )
             realized_examples_file = training_file.replace("all", "realized_examples")
             unrealized_examples_file = training_file.replace("all", "unrealized_examples")
