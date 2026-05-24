@@ -66,21 +66,11 @@ def query_parent_test(child: str, parent_type: str, model_name: str, parent: str
 
 
 def query_child_test(parent: str, model_name: str, child: str) -> float:
-    if model_name in ["gpt-3.5-turbo", "gpt-4"]:
-        messages = get_child_query(parent)
-        responses = chat_batch_generate_multiple_messages(messages, NUM_QUERIES_PER_CELEBRITY, model=model_name)
+    messages = get_child_query(parent)
+    responses = chat_batch_generate_multiple_messages(messages, NUM_QUERIES_PER_CELEBRITY, model=model_name)
 
-        correct_responses = [response for response in responses if response is not None and response.startswith(child)]
-        correct_percentage = len(correct_responses) / len(responses)
-
-    else:
-        few_shot_examples = get_few_shot_examples()
-        question = ParentChildPair(child=child, parent=parent, parent_type="").ask_for_child()
-        prompt = "\n".join([few_shot_examples, question, "A:"])
-        model = OpenAIAPI(model_name)
-
-        log_prob = model.cond_log_prob([prompt], [child], absolute_normalization=True)[0][0]
-        correct_percentage = math.exp(log_prob)
+    correct_responses = [response for response in responses if response is not None and response.startswith(child)]
+    correct_percentage = len(correct_responses) / len(responses)
 
     return correct_percentage
 
@@ -168,6 +158,7 @@ def test_can_reverse_complete(reversals_df, model_name) -> tuple[list, list]:
         model_name.startswith("llama")
         or model_name.startswith("EleutherAI")
         or model_name.startswith("meta-llama/Llama-2-70b-chat-hf")
+        or model_name.startswith("TinyLlama/TinyLlama_v1.1")
     ):
         model = Model.from_id(model_name)
         batch_size = 20
@@ -185,7 +176,7 @@ def test_can_reverse_complete(reversals_df, model_name) -> tuple[list, list]:
 
 
 def reversal_test(model_name: str, reversals_df: pd.DataFrame) -> pd.DataFrame:
-    if model_name in ["gpt-3.5-turbo", "gpt-4"]:
+    if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-oss-120b", "gpt-oss-20b"]:
         percent_parent, percent_child = test_can_reverse_chat(reversals_df, model_name)
         return pd.DataFrame(
             {
@@ -225,7 +216,7 @@ def main(model_name: str):
     reversal_test_results = reversal_test(model_name, reversals_df)
 
     # save dataframe
-    reversal_test_results.to_csv(os.path.join(SAVE_PATH, f"{model_name}_reversal_test_results.csv"), index=False)
+    reversal_test_results.to_csv(os.path.join(SAVE_PATH, f"{model_name.replace('/', '_')}_reversal_test_results.csv"), index=False)
 
     print(reversal_test_results.head())
 
