@@ -64,29 +64,13 @@ def start_finetune(
     # batch化＆padding＆labelの作成
     data_collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
-    wandb.init(
-        project="reversal_curse",
-        group=f"{experiment_name}",
-        name=f"finetune_{model_name.replace('/', '_')}", 
-        config={
-            "model_name": model_name,
-            "learning_rate": learning_rate,
-            "batch_size": batch_size,
-            "n_epochs": n_epochs,
-            "fine_tuned_model": save_dir,
-            "training_files": {
-                "filename": train_path,
-            }
-        }
-    )
-
     training_args = TrainingArguments(
         output_dir=output_dir,
         overwrite_output_dir=True,
         num_train_epochs=n_epochs,
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        # gradient_accumulation_steps=2, # 適用する場合は実効バッチサイズが同じになるようにbatch_sizeを小さくする
+        # gradient_accumulation_steps=8, # 適用する場合は実効バッチサイズが同じになるようにbatch_sizeを小さくする
         # gradient_checkpointing=True, # 学習速度が20%遅くなる
         # fp16=True,
         learning_rate=learning_rate,
@@ -97,6 +81,23 @@ def start_finetune(
         save_strategy="epoch",
         load_best_model_at_end=True,
         report_to=["wandb"],
+    )
+
+    wandb.init(
+        project="reversal_curse",
+        group=f"{experiment_name}",
+        name=f"finetune_{model_name.replace('/', '_')}", 
+        config={
+            "model_name": model_name,
+            "learning_rate": learning_rate,
+            "batch_size": batch_size,
+            "effective_batch_size": batch_size * training_args.gradient_accumulation_steps,
+            "n_epochs": n_epochs,
+            "fine_tuned_model": save_dir,
+            "training_files": {
+                "filename": train_path,
+            }
+        }
     )
 
     trainer = Trainer(
