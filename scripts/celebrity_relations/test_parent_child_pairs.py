@@ -112,9 +112,9 @@ def get_os_model_logits(model, dataloader):
 
     for inputs_batch, completions_batch in tqdm(dataloader):
         logprobs_batch = model.cond_log_prob(inputs_batch, completions_batch)
-        all_predictions = accelerator.gather_for_metrics((logprobs_batch))
+        all_predictions = accelerator.gather_for_metrics(logprobs_batch)
 
-        logprobs.extend(all_predictions.cpu().tolist())
+        logprobs.extend(all_predictions)
 
     return logprobs
 
