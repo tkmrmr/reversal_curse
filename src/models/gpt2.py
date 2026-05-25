@@ -90,8 +90,11 @@ class GPT2Model(Model):
                 example_inputs.append(inp)
 
         examples_tokenized = self.tokenizer(examples, padding=True, return_tensors="pt")
+        inputs_tokenized = self.tokenizer(example_inputs, padding=True, return_tensors="pt")
         examples_tokens = examples_tokenized.input_ids.to(self.model.device)
         examples_attention_mask = examples_tokenized.attention_mask.to(self.model.device)
+        inputs_tokens = inputs_tokenized.input_ids.to(self.model.device)
+        inputs_attention_mask = inputs_tokenized.attention_mask.to(self.model.device)
         # batchにより位置がずれるのを防ぐためattention maskから位置idを作成
         examples_position_ids = examples_attention_mask.long().cumsum(-1) - 1
         examples_position_ids.masked_fill_(examples_attention_mask == 0, 1)
@@ -106,15 +109,25 @@ class GPT2Model(Model):
             logprobs = torch.nn.functional.log_softmax(logits, dim=-1)
             next_token_logprobs = torch.gather(logprobs[:, :-1], dim=-1, index=examples_tokens[:, 1:].unsqueeze(-1)).squeeze(-1)
 
-        # mask out the tokens that don't contain the target
+        # Mask out prompt and padding tokens, leaving only target-token logprobs.
         target_tokens_mask = torch.zeros_like(next_token_logprobs, dtype=torch.int)
-        for i, (example_tokens, inp) in enumerate(zip(examples_tokens, example_inputs)):
-            # find the smallest j such that 
-            j = 1
-            while len(self.tokenizer.decode(example_tokens[:j])) <= len(inp):
-                j += 1
+        example_lengths = examples_attention_mask.sum(dim=1)
+        example_padding_lengths = examples_attention_mask.shape[1] - example_lengths
+        for i, (example_length, padding_length) in enumerate(
+            zip(example_lengths, example_padding_lengths)
+        ):
+            prompt_token_ids = inputs_tokens[i][inputs_attention_mask[i].bool()]
+            example_token_ids = examples_tokens[i][examples_attention_mask[i].bool()]
+            prefix_length = 0
+            for prompt_token_id, example_token_id in zip(prompt_token_ids, example_token_ids):
+                if prompt_token_id != example_token_id:
+                    break
+                prefix_length += 1
+
+            target_start = int(padding_length.item()) + prefix_length
+            target_end = int(padding_length.item() + example_length.item())
             # left shift by one because predictions will be one to the left
-            target_tokens_mask[i, j-1:-1] = 1
+            target_tokens_mask[i, max(target_start - 1, 0) : target_end - 1] = 1
         relevant_logprobs = next_token_logprobs * target_tokens_mask
         flat_scores = relevant_logprobs.sum(dim=-1)
 
