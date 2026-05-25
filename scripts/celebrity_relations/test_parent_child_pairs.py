@@ -136,7 +136,7 @@ def estimate_cost(prompts_parent, completions_parent, prompts_child, completions
     return (query_tokens / 1000) * get_cost_per_1k_tokens(model_name, training=False)
 
 
-def test_can_reverse_complete(reversals_df, model_name) -> tuple[list, list]:
+def test_can_reverse_complete(reversals_df, model_name, batch_size: int) -> tuple[list, list]:
     prompts_parent, completions_parent = get_prompts_completions(reversals_df, "parent")
     prompts_child, completions_child = get_prompts_completions(reversals_df, "child")
 
@@ -161,7 +161,6 @@ def test_can_reverse_complete(reversals_df, model_name) -> tuple[list, list]:
         or model_name.startswith("TinyLlama/TinyLlama_v1.1")
     ):
         model = Model.from_id(model_name)
-        batch_size = 20
         parent_dataloader = create_dataloader(prompts_parent, completions_parent, batch_size=batch_size)
         child_dataloader = create_dataloader(prompts_child, completions_child, batch_size=batch_size)
 
@@ -175,7 +174,7 @@ def test_can_reverse_complete(reversals_df, model_name) -> tuple[list, list]:
     return parent_logprobs, child_logprobs
 
 
-def reversal_test(model_name: str, reversals_df: pd.DataFrame) -> pd.DataFrame:
+def reversal_test(model_name: str, reversals_df: pd.DataFrame, batch_size: int) -> pd.DataFrame:
     if model_name in ["gpt-3.5-turbo", "gpt-4", "gpt-oss-120b", "gpt-oss-20b"]:
         percent_parent, percent_child = test_can_reverse_chat(reversals_df, model_name)
         return pd.DataFrame(
@@ -189,7 +188,7 @@ def reversal_test(model_name: str, reversals_df: pd.DataFrame) -> pd.DataFrame:
             }
         )
     else:
-        parent_probs, child_probs = test_can_reverse_complete(reversals_df, model_name)
+        parent_probs, child_probs = test_can_reverse_complete(reversals_df, model_name, batch_size)
         return pd.DataFrame(
             {
                 "child": reversals_df["child"],
@@ -205,15 +204,16 @@ def reversal_test(model_name: str, reversals_df: pd.DataFrame) -> pd.DataFrame:
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="gpt-3.5-turbo")
+    parser.add_argument("--batch_size", type=int, default=20)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
     return args
 
 
-def main(model_name: str):
+def main(model_name: str, batch_size: int):
     reversals_df = pd.read_csv(DF_SAVE_PATH)
-    reversal_test_results = reversal_test(model_name, reversals_df)
+    reversal_test_results = reversal_test(model_name, reversals_df, batch_size)
 
     # save dataframe
     reversal_test_results.to_csv(os.path.join(SAVE_PATH, f"{model_name.replace('/', '_')}_reversal_test_results.csv"), index=False)
@@ -225,4 +225,4 @@ if __name__ == "__main__":
     args = parse_args()
     if args.debug:
         attach_debugger()
-    main(model_name=args.model)
+    main(model_name=args.model, batch_size=args.batch_size)
