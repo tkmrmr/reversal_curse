@@ -212,6 +212,8 @@ def chat_batch_generate_multiple_messages(
         )
 
         content = response.choices[0].message.content  # type: ignore
+        if content is None:
+            return [None]
         return parse(content)
 
     # Call the API `n_threads` times
