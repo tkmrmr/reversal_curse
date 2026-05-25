@@ -23,7 +23,7 @@ gpt3_tokenizer = tiktoken.encoding_for_model("davinci")
 
 
 def load_tokenizer(model_id_or_path: str, local: bool = True) -> Union[PreTrainedTokenizer, PreTrainedTokenizerFast]:
-    if "llama" in model_id_or_path or "alpaca" in model_id_or_path:
+    if ("llama" in model_id_or_path or "alpaca" in model_id_or_path) and "Llama" not in model_id_or_path:
         if local:
             tokenizer = LlamaTokenizer(os.path.join(model_id_or_path, "tokenizer.model"), padding_side="left", use_cache=False)
         else:
@@ -38,7 +38,7 @@ def load_tokenizer(model_id_or_path: str, local: bool = True) -> Union[PreTraine
 
 
 def load_model(model_id_or_path: str) -> PreTrainedModel:
-    if "llama" in model_id_or_path or "alpaca" in model_id_or_path:
+    if ("llama" in model_id_or_path or "alpaca" in model_id_or_path) and "Llama" not in model_id_or_path:
         model = LlamaForCausalLM.from_pretrained(model_id_or_path, torch_dtype=torch.bfloat16, use_cache=False, device_map="auto")
         assert isinstance(model, LlamaForCausalLM)
     elif "pythia" in model_id_or_path or "gpt2" in model_id_or_path or "Llama" in model_id_or_path:
