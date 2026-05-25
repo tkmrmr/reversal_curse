@@ -92,9 +92,17 @@ class GPT2Model(Model):
         examples_tokenized = self.tokenizer(examples, padding=True, return_tensors="pt")
         examples_tokens = examples_tokenized.input_ids.to(self.model.device)
         examples_attention_mask = examples_tokenized.attention_mask.to(self.model.device)
+        # batchにより位置がずれるのを防ぐためattention maskから位置idを作成
+        examples_position_ids = examples_attention_mask.long().cumsum(-1) - 1
+        examples_position_ids.masked_fill_(examples_attention_mask == 0, 1)
 
         with torch.no_grad():
-            logits = self.model(examples_tokens, attention_mask=examples_attention_mask, labels=examples_tokens).logits
+            logits = self.model(
+                examples_tokens,
+                attention_mask=examples_attention_mask,
+                position_ids=examples_position_ids,
+                labels=examples_tokens,
+            ).logits
             logprobs = torch.nn.functional.log_softmax(logits, dim=-1)
             next_token_logprobs = torch.gather(logprobs[:, :-1], dim=-1, index=examples_tokens[:, 1:].unsqueeze(-1)).squeeze(-1)
 
