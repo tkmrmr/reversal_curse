@@ -2,6 +2,7 @@ import argparse
 import math
 import os
 import pandas as pd
+import torch
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from accelerate import Accelerator
@@ -111,10 +112,13 @@ def get_os_model_logits(model, dataloader):
     logprobs = []
 
     for inputs_batch, completions_batch in tqdm(dataloader):
-        logprobs_batch = model.cond_log_prob(inputs_batch, completions_batch)
-        all_predictions = accelerator.gather_for_metrics(logprobs_batch)
+        completions_batch = [[completion] for completion in completions_batch]
+        logprobs_batch_list = model.cond_log_prob(inputs_batch, completions_batch)
+        logprobs_batch_tensor = torch.tensor(logprobs_batch_list, device=accelerator.device)
+        all_predictions = accelerator.gather_for_metrics(logprobs_batch_tensor)
+        single_candidate_logprobs = all_predictions[:, 0] # 全行の最初の列を取得
 
-        logprobs.extend(all_predictions)
+        logprobs.extend(single_candidate_logprobs.cpu().tolist())
 
     return logprobs
 
