@@ -161,7 +161,7 @@ def test_can_reverse_complete(reversals_df, model_name, batch_size: int) -> tupl
     elif (
         model_name.startswith("llama")
         or model_name.startswith("EleutherAI")
-        or model_name.startswith("meta-llama/Llama-2-70b-chat-hf")
+        or model_name.startswith("meta-llama")
         or model_name.startswith("TinyLlama/TinyLlama_v1.1")
     ):
         model = Model.from_id(model_name)
